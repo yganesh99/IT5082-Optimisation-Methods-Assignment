@@ -62,14 +62,14 @@ $$
 
 ## Data required
 
-| Dataset component | Why we need it | Where to find |
-| --- | --- | --- |
-| **Movie CSV** (e.g. Kaggle / TMDB / IMDb / MovieLens) | Durations, genres, **release date** or **weeks since release** as raw input for lifecycle and grouping. | TMDB, IMDb, MovieLens, Kaggle, etc. |
-| **Cinema JSON** | Hall types, capacities, **average ticket price per hall type**. | Synthetic (config file) |
-| **Enhanced demand matrix** | Time-of-day + genre fit + decay; applies decay (and multipliers) to build demand weights. | Synthetic / derived |
-| **Historical demand** (optional calibration) | Average ticket price by context, occupancy by genre, weekend vs. weekday multipliers. | Kaggle / box-office style datasets |
-| **Staffing constraints** | Max starts per window (lobby cap). | Hardcode in notebooks or config |
-| **Movie contracts** | Minimum number of showings per title. | Synthetic |
+We need to round up movie durations to the nearest 15 minute to allow for the staffing constraints cleanly.
+
+| Dataset component                                     | Why we need it                                                                                                            | Where to find                                                                                             |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| **Movie CSV** (e.g. Kaggle / TMDB / IMDb / MovieLens) | Durations, genres, **release date** or **weeks since release** as raw input for lifecycle and grouping.                   | TMDB, IMDb, MovieLens, Kaggle, etc.                                                                       |
+| **Cinema JSON**                                       | Hall types, Capacities, Average Ticket Price Per Hall Type, Max starts per window, Window Size, Last Movie End Time \*\*. | Synthetic (config file)                                                                                   |
+| **Enhanced demand matrix**                            | Time-of-day + genre fit + decay; applies decay (and multipliers) to build demand weights.                                 | Synthetic / derived                                                                                       |
+| **Movie contracts**                                   | Minimum number of showings per title.                                                                                     | Synthetic added to the primary kaggle movie dataset when splitting into small, medium and large datasets. |
 
 ## Output format (each method)
 
@@ -79,35 +79,35 @@ Example:
 
 ```json
 {
-  "metadata": {
-    "algorithm": "Genetic Algorithm",
-    "execution_time_seconds": 12.4,
-    "total_revenue": 14500.50,
-    "fitness_score": 0.98,
-    "constraints_violated": 0
-  },
-  "schedule": [
-    {
-      "hall_id": "Hall_01",
-      "movie_id": "M_102",
-      "movie_title": "Interstellar",
-      "start_slot": 4,
-      "start_time": "11:00 AM",
-      "end_slot": 13,
-      "end_time": "01:15 PM",
-      "expected_revenue": 450.00
-    },
-    {
-      "hall_id": "Hall_01",
-      "movie_id": "M_205",
-      "movie_title": "The Batman",
-      "start_slot": 15,
-      "start_time": "01:45 PM",
-      "end_slot": 27,
-      "end_time": "04:45 PM",
-      "expected_revenue": 620.00
-    }
-  ]
+	"metadata": {
+		"algorithm": "Genetic Algorithm",
+		"execution_time_seconds": 12.4,
+		"total_revenue": 14500.5,
+		"fitness_score": 0.98,
+		"constraints_violated": 0
+	},
+	"schedule": [
+		{
+			"hall_id": "Hall_01",
+			"movie_id": "M_102",
+			"movie_title": "Interstellar",
+			"start_slot": 4,
+			"start_time": "11:00 AM",
+			"end_slot": 13,
+			"end_time": "01:15 PM",
+			"expected_revenue": 450.0
+		},
+		{
+			"hall_id": "Hall_01",
+			"movie_id": "M_205",
+			"movie_title": "The Batman",
+			"start_slot": 15,
+			"start_time": "01:45 PM",
+			"end_slot": 27,
+			"end_time": "04:45 PM",
+			"expected_revenue": 620.0
+		}
+	]
 }
 ```
 
@@ -124,7 +124,9 @@ A small **`validator.py`** (or equivalent) can read this JSON and check feasibil
 - **Screen-type compatibility** — 3D, IMAX, standard, etc.
 - **Finer pricing** — Price varying by seat tier within the same hall, not only by time/hall.
 - **Genre–hall fit** — Preferring certain genres or formats in specific hall types.
+- **Parental Guide Rating** - Take into account the parental guide rating of movies when modelling demand.
+- **Language and Country** - The language of the movie and the country of the cineplex can impact the demand.
 
 ---
 
-*Problem statement, data sources, and output contract live here; solvers, notebooks, and `validator.py` live in the repository implementation.*
+_Problem statement, data sources, and output contract live here; solvers, notebooks, and `validator.py` live in the repository implementation._
