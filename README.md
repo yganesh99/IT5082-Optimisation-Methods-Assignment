@@ -62,16 +62,18 @@ $$
 
 ## Data required
 
+The **primary dataset** is the Kaggle TMDB movies release (**`TMDB_movie_dataset_v11.csv`**): [TMDB Movies Dataset 2023 (930k+ movies) on Kaggle](https://www.kaggle.com/datasets/asaniczka/tmdb-movies-dataset-2023-930k-movies?select=TMDB_movie_dataset_v11.csv).
+
 We need to round up movie durations to the nearest 15 minute to allow for the staffing constraints cleanly.
 
-| Dataset component                                     | Why we need it                                                                                                            | Where to find                                                                                             |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| **Movie CSV** (e.g. Kaggle / TMDB / IMDb / MovieLens) | Durations, genres, **release date** or **weeks since release** as raw input for lifecycle and grouping.                   | TMDB, IMDb, MovieLens, Kaggle, etc.                                                                       |
-| **Cinema JSON**                                       | Hall types, Capacities, Average Ticket Price Per Hall Type, Max starts per window, Window Size, Last Movie End Time \*\*. | Synthetic (config file)                                                                                   |
-| **Enhanced demand matrix**                            | Time-of-day + genre fit + decay; applies decay (and multipliers) to build demand weights.                                 | Synthetic / derived                                                                                       |
-| **Movie contracts**                                   | Minimum number of showings per title.                                                                                     | Synthetic added to the primary kaggle movie dataset when splitting into small, medium and large datasets. |
+| Dataset component                                     | Why we need it                                                                                                            | Where to find                                                                                                                                                                                               |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Movie CSV** (e.g. Kaggle / TMDB / IMDb / MovieLens) | Durations, genres, **release date** or **weeks since release** as raw input for lifecycle and grouping.                   | Primary: [Kaggle — `TMDB_movie_dataset_v11.csv`](https://www.kaggle.com/datasets/asaniczka/tmdb-movies-dataset-2023-930k-movies?select=TMDB_movie_dataset_v11.csv). Alternates: TMDB, IMDb, MovieLens, etc. |
+| **Cinema JSON**                                       | Hall types, Capacities, Average Ticket Price Per Hall Type, Max starts per window, Window Size, Last Movie End Time \*\*. | Synthetic (config file)                                                                                                                                                                                     |
+| **Enhanced demand matrix**                            | Time-of-day + genre fit + decay; applies decay (and multipliers) to build demand weights.                                 | Synthetic / derived                                                                                                                                                                                         |
+| **Movie contracts**                                   | Minimum number of showings per title.                                                                                     | Synthetic added to the primary kaggle movie dataset when splitting into small, medium and large datasets.                                                                                                   |
 
-## Output format (each method)
+## Output format for easy comparison (each method)
 
 Every method (exact, heuristic, etc.) should be able to emit the same JSON shape: **`metadata`** (run summary) and **`schedule`** (list of screenings with slot indices and human-readable times).
 
