@@ -9,11 +9,13 @@ Scheduling is more than choosing a time slot from a list of free slots. The form
 1. **Capacity vs. demand** — High-blockbuster titles should be placed in larger halls during peak periods when demand is strongest.
 2. **Turnaround time** — Cleaning and maintenance must be respected between consecutive shows in the same hall.
 3. **Operational constraints** — Overlapping start times should not exceed what lobby and concession staff can handle.
-4. **Revenue maximisation** — Prefer screenings that yield higher expected revenue (e.g. high-margin slots and demand-weighted attendance).
+4. **Revenue maximisation** — Prioritise high-margin screenings and demand-weighted expected attendance.
+5. **Genre–time alignment** — A single Gaussian peak (e.g. “8:00 PM for everything”) is too coarse. In practice, animated/family titles often peak around late morning or mid-afternoon, horror/R-rated titles later in the evening, and blockbusters often have a broader peak.
+6. **Movie lifecycle** — A title that premiered recently is typically worth more in schedule terms than one that has already been on screen for several weeks (reflected in base popularity, release age, or similar inputs).
 
 ## Demand and time discretisation
 
-- **Demand** can be modelled using the **genre** of each movie and may **decay or reduce over time** within the day (e.g. late shows vs. prime time).
+- **Demand** can be modelled using the **genre** of each movie and may **decay or reduce over time** (within the day and/or over weeks since release).
 - The **day is discretised into 15-minute windows** (slots). All start times and durations are expressed in these slots.
 
 ## Decision variables
@@ -28,10 +30,27 @@ Let $x_{m,h,t}$ be a **binary** variable:
 Maximise
 
 $$
-Z = \sum_{m} \sum_{h} \sum_{t} \bigl( x_{m,h,t} \cdot \mathrm{Capacity}_h \cdot \mathrm{AvgTicketPrice}_h \cdot \mathrm{DemandWeight}_{m,t} \bigr).
+Z = \sum_{m} \sum_{h} \sum_{t} \bigl( x_{m,h,t} \cdot \mathrm{Capacity}_h \cdot P_h \cdot W_{m,h,t} \bigr).
 $$
 
-Interpretation: for each feasible start $(m,h,t)$, expected revenue is proportional to hall capacity, average ticket price for that hall, and a demand weight for movie $m$ at slot $t$ (which can encode genre and time-of-day effects).
+- $P_h$ — average ticket price for hall $h$ (hall type / pricing tier).
+- $W_{m,h,t}$ — **demand weight** for movie $m$ (and hall $h$ if you model hall-specific demand) at slot $t$, scaled **between 0 and 1**.
+
+A convenient factorisation for the time- and genre-driven part is
+
+$$
+W_{m,t} = \mathrm{BasePopularity}_m \times \mathrm{Decay}_t \times \mathrm{GenreTimeFit}_{g,t} \times \mathrm{DayMulti}_{\mathrm{day}} \times \mathrm{TimeMulti}_{\mathrm{slot}}.
+$$
+
+Here $g$ is the genre of movie $m$, and $\mathrm{BasePopularity}_m$ can encode lifecycle (e.g. freshness vs. weeks since release). When demand does not depend on hall, use $W_{m,h,t} = W_{m,t}$; otherwise multiply by a hall-specific factor inside $W_{m,h,t}$.
+
+Exponential decay (example for a weight component over slot index $t$):
+
+$$
+\mathrm{Decay} = W_0 \cdot e^{-\lambda t}.
+$$
+
+(Implementations may apply decay to the **within-day** slot index, to **weeks since release**, or both—depending on how $\mathrm{BasePopularity}_m$ and $\mathrm{Decay}_t$ are defined in your data pipeline.)
 
 ## Constraints
 
@@ -41,12 +60,20 @@ Interpretation: for each feasible start $(m,h,t)$, expected revenue is proportio
 4. **Cleaning and scanning buffer** — Enforce **one slot (15 minutes)** of buffer between the end of one show and the start of the next in the same hall (cleaning, ticket scanning, turnover), consistent with the no-overlap rules.
 5. **Movie assignment / contracts** — Each movie must be shown **at least once**, or a **contract-specific** minimum number of screenings, depending on business rules.
 
-## Output format
+## Data required
 
-A run (e.g. genetic algorithm or exact solver) can report results as JSON with two top-level keys:
+| Dataset component | Why we need it | Where to find |
+| --- | --- | --- |
+| **Movie CSV** (e.g. Kaggle / TMDB / IMDb / MovieLens) | Durations, genres, **release date** or **weeks since release** as raw input for lifecycle and grouping. | TMDB, IMDb, MovieLens, Kaggle, etc. |
+| **Cinema JSON** | Hall types, capacities, **average ticket price per hall type**. | Synthetic (config file) |
+| **Enhanced demand matrix** | Time-of-day + genre fit + decay; applies decay (and multipliers) to build demand weights. | Synthetic / derived |
+| **Historical demand** (optional calibration) | Average ticket price by context, occupancy by genre, weekend vs. weekday multipliers. | Kaggle / box-office style datasets |
+| **Staffing constraints** | Max starts per window (lobby cap). | Hardcode in notebooks or config |
+| **Movie contracts** | Minimum number of showings per title. | Synthetic |
 
-- **`metadata`** — Run summary: algorithm name, wall-clock time, aggregate revenue, fitness (if used), and how many constraints were violated.
-- **`schedule`** — Ordered list of screenings; each entry ties a hall to one movie with **slot indices** (15-minute units, aligned with the model) and human-readable times, plus **expected revenue** for that screening.
+## Output format (each method)
+
+Every method (exact, heuristic, etc.) should be able to emit the same JSON shape: **`metadata`** (run summary) and **`schedule`** (list of screenings with slot indices and human-readable times).
 
 Example:
 
@@ -84,6 +111,20 @@ Example:
 }
 ```
 
+## Constraint validator
+
+A small **`validator.py`** (or equivalent) can read this JSON and check feasibility, for example:
+
+- **Overlaps (per hall)** — For the same `hall_id`, does the interval `[start_slot, end_slot)` of one screening overlap another (after accounting for buffer rules if you model them explicitly in slots)?
+- **Lobby congestion** — Count screenings by `start_slot`; if any slot has **more than 2** starts, the schedule is invalid (per the lobby constraint).
+- **1 AM rule** — Does any `end_slot` exceed the maximum allowed end slot for the operating day?
+
+## Future work
+
+- **Screen-type compatibility** — 3D, IMAX, standard, etc.
+- **Finer pricing** — Price varying by seat tier within the same hall, not only by time/hall.
+- **Genre–hall fit** — Preferring certain genres or formats in specific hall types.
+
 ---
 
-*This README states the mathematical problem; implementation (exact solver vs. heuristic, data sources for $\mathrm{DemandWeight}_{m,t}$, and concrete values for $T$ and hall parameters) lives in the codebase and configuration.*
+*Problem statement, data sources, and output contract live here; solvers, notebooks, and `validator.py` live in the repository implementation.*
