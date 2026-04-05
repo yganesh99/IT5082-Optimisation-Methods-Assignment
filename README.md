@@ -4,6 +4,21 @@ This document describes the optimisation problem for **one multiplex** with mult
 
 Scheduling is more than choosing a time slot from a list of free slots. The formulation must balance several competing goals.
 
+## Python environment (notebooks / collaborators)
+
+Dependencies for notebooks (e.g. `heuristic(GA)/genetic_algorithm_optimizer.ipynb`) are listed in **`requirements.txt`**. Use a **project virtual environment** so installs work the same on every machine (and avoid macOS Homebrew “externally managed environment” / PEP 668 errors).
+
+**Easiest — run once from the repo root:**
+
+| OS            | Command                                          |
+| ------------- | ------------------------------------------------ |
+| macOS / Linux | `bash setup_env.sh`                              |
+| Windows       | `setup_env.bat` (double-click or run from `cmd`) |
+
+**Then in Cursor or VS Code:** Command Palette → **Python: Select Interpreter** → choose the interpreter under **`.venv`** (or **Enter interpreter path**: macOS/Linux `.venv/bin/python`, Windows `.venv\Scripts\python.exe`).
+
+**Manual (same effect):** `python3 -m venv .venv` → activate (macOS/Linux: `source .venv/bin/activate`; Windows: `.venv\Scripts\activate`) → `python -m pip install -r requirements.txt`.
+
 ## Design considerations
 
 1. **Capacity vs. demand** — High-blockbuster titles should be placed in larger halls during peak periods when demand is strongest.
@@ -58,7 +73,7 @@ $$
 2. **End-by deadline** — All screenings must **finish** by the last allowed slot $T$ (e.g. **1:00 AM** in the problem statement), expressed in the same 15-minute indexing as $t$.
 3. **Lobby / concurrent starts** — In any single 15-minute window, the **number of movie starts** is limited (e.g. **at most 2** simultaneous starts) so lobby and ticket-scanning load stays manageable.
 4. **Cleaning and scanning buffer** — Enforce **one slot (15 minutes)** of buffer between the end of one show and the start of the next in the same hall (cleaning, ticket scanning, turnover), consistent with the no-overlap rules.
-5. **Movie assignment / contracts** — Each movie must be shown **at least once**, or a **contract-specific** minimum number of screenings, depending on business rules.
+5. **Movie assignment / contracts** — Movie Assignment: Each movie must be shown for the specified number of times as in the contract.
 
 ## Data required
 
