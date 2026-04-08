@@ -5,12 +5,12 @@ from typing import Optional, Union
 
 import pandas as pd
 
-_REPO_ROOT = Path(__file__).resolve().parent
-_DEFAULT_CSV = _REPO_ROOT / "common" / "TMDB_movie_dataset_v11.csv"
+_COMMON_DIR = Path(__file__).resolve().parent
+_DEFAULT_CSV = _COMMON_DIR / "TMDB_movie_dataset_v11.csv"
 
 
 def default_tmdb_csv_path() -> Path:
-    """Absolute path to the bundled TMDB CSV (next to ``common/``)."""
+    """Absolute path to the bundled TMDB CSV (same directory as this module)."""
     return _DEFAULT_CSV
 
 

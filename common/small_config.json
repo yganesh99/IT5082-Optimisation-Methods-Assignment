@@ -1,0 +1,44 @@
+{
+	"version": 1,
+	"cineplex_name": "Metro Multiplex — small (2 halls)",
+	"currency": "LKR",
+	"notes": "Synthetic reference multiplex. Hall capacity and average_ticket_price are per hall type; each physical hall references one type. Slot indices are 15-minute steps from slot_zero_start_time; derive max_end_slot_exclusive (or total slot count) in code from slot_zero_start_time, last_screening_end_time, last_screening_end_is_next_calendar_day, and slot_duration_minutes. Lobby rule limits simultaneous starts per slot.",
+	"constraints": {
+		"slot_duration_minutes": 15,
+		"opening_time": "10:00",
+		"closing_time": "01:00",
+		"closing_time_is_next_calendar_day": true,
+		"lobby_max_simultaneous_starts": 2,
+		"cleaning_buffer_slots": 1
+	},
+	"hall_types": [
+		{
+			"id": "standard",
+			"label": "Standard digital",
+			"capacity": 140,
+			"average_ticket_price": 12.5
+		},
+		{
+			"id": "deluxe",
+			"label": "Deluxe / wide seating",
+			"capacity": 180,
+			"average_ticket_price": 14.0
+		},
+		{
+			"id": "premium",
+			"label": "Premium (recliners, Atmos)",
+			"capacity": 96,
+			"average_ticket_price": 22.0
+		},
+		{
+			"id": "imax",
+			"label": "Large-format (IMAX-style)",
+			"capacity": 280,
+			"average_ticket_price": 26.0
+		}
+	],
+	"halls": [
+		{ "id": "Hall_01", "hall_type_id": "standard" },
+		{ "id": "Hall_02", "hall_type_id": "deluxe" }
+	]
+}
