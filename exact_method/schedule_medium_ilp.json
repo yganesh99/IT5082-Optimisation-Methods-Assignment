@@ -1,0 +1,366 @@
+{
+  "metadata": {
+    "algorithm": "ILP (OR-Tools CBC)",
+    "solver_status": "OPTIMAL",
+    "execution_time_seconds": 0.8348839159589261,
+    "total_revenue": 3.103982164856627e-05,
+    "fitness_score": null,
+    "constraints_violated": 0,
+    "day_type": "weekday",
+    "num_slots": 60,
+    "num_halls": 6,
+    "num_movies": 12
+  },
+  "schedule": [
+    {
+      "hall_id": "Hall_01",
+      "movie_id": "385687",
+      "movie_title": "Fast X",
+      "start_slot": 3,
+      "start_time": "10:45",
+      "end_slot": 13,
+      "end_time": "13:15",
+      "expected_revenue": 1.3279954188230807e-21
+    },
+    {
+      "hall_id": "Hall_01",
+      "movie_id": "385687",
+      "movie_title": "Fast X",
+      "start_slot": 14,
+      "start_time": "13:30",
+      "end_slot": 24,
+      "end_time": "16:00",
+      "expected_revenue": 1.249549349319644e-14
+    },
+    {
+      "hall_id": "Hall_01",
+      "movie_id": "565770",
+      "movie_title": "Blue Beetle",
+      "start_slot": 26,
+      "start_time": "16:30",
+      "end_slot": 35,
+      "end_time": "18:45",
+      "expected_revenue": 5.577955228076852e-07
+    },
+    {
+      "hall_id": "Hall_01",
+      "movie_id": "565770",
+      "movie_title": "Blue Beetle",
+      "start_slot": 36,
+      "start_time": "19:00",
+      "end_slot": 45,
+      "end_time": "21:15",
+      "expected_revenue": 1.6491093073188376e-06
+    },
+    {
+      "hall_id": "Hall_01",
+      "movie_id": "968051",
+      "movie_title": "The Nun II",
+      "start_slot": 46,
+      "start_time": "21:30",
+      "end_slot": 54,
+      "end_time": "23:30",
+      "expected_revenue": 9.02858555325516e-07
+    },
+    {
+      "hall_id": "Hall_02",
+      "movie_id": "615656",
+      "movie_title": "Meg 2: The Trench",
+      "start_slot": 0,
+      "start_time": "10:00",
+      "end_slot": 8,
+      "end_time": "12:00",
+      "expected_revenue": 1.0861059040889164e-24
+    },
+    {
+      "hall_id": "Hall_02",
+      "movie_id": "615656",
+      "movie_title": "Meg 2: The Trench",
+      "start_slot": 9,
+      "start_time": "12:15",
+      "end_slot": 17,
+      "end_time": "14:15",
+      "expected_revenue": 7.873986435966967e-18
+    },
+    {
+      "hall_id": "Hall_02",
+      "movie_id": "346698",
+      "movie_title": "Barbie",
+      "start_slot": 19,
+      "start_time": "14:45",
+      "end_slot": 27,
+      "end_time": "16:45",
+      "expected_revenue": 3.0353431731096877e-08
+    },
+    {
+      "hall_id": "Hall_02",
+      "movie_id": "565770",
+      "movie_title": "Blue Beetle",
+      "start_slot": 28,
+      "start_time": "17:00",
+      "end_slot": 37,
+      "end_time": "19:15",
+      "expected_revenue": 8.254173362422518e-07
+    },
+    {
+      "hall_id": "Hall_02",
+      "movie_id": "565770",
+      "movie_title": "Blue Beetle",
+      "start_slot": 38,
+      "start_time": "19:30",
+      "end_slot": 47,
+      "end_time": "21:45",
+      "expected_revenue": 1.5795875983724717e-06
+    },
+    {
+      "hall_id": "Hall_02",
+      "movie_id": "968051",
+      "movie_title": "The Nun II",
+      "start_slot": 48,
+      "start_time": "22:00",
+      "end_slot": 56,
+      "end_time": "00:00",
+      "expected_revenue": 6.579517958556351e-07
+    },
+    {
+      "hall_id": "Hall_03",
+      "movie_id": "1002338",
+      "movie_title": "Operation Napoleon",
+      "start_slot": 1,
+      "start_time": "10:15",
+      "end_slot": 9,
+      "end_time": "12:15",
+      "expected_revenue": 1.2043124185611954e-25
+    },
+    {
+      "hall_id": "Hall_03",
+      "movie_id": "1008042",
+      "movie_title": "Talk to Me",
+      "start_slot": 10,
+      "start_time": "12:30",
+      "end_slot": 17,
+      "end_time": "14:15",
+      "expected_revenue": 1.0379309647815267e-17
+    },
+    {
+      "hall_id": "Hall_03",
+      "movie_id": "976573",
+      "movie_title": "Elemental",
+      "start_slot": 18,
+      "start_time": "14:30",
+      "end_slot": 25,
+      "end_time": "16:15",
+      "expected_revenue": 3.2595293277821372e-09
+    },
+    {
+      "hall_id": "Hall_03",
+      "movie_id": "565770",
+      "movie_title": "Blue Beetle",
+      "start_slot": 26,
+      "start_time": "16:30",
+      "end_slot": 35,
+      "end_time": "18:45",
+      "expected_revenue": 8.032255528430666e-07
+    },
+    {
+      "hall_id": "Hall_03",
+      "movie_id": "565770",
+      "movie_title": "Blue Beetle",
+      "start_slot": 36,
+      "start_time": "19:00",
+      "end_slot": 45,
+      "end_time": "21:15",
+      "expected_revenue": 2.374717402539126e-06
+    },
+    {
+      "hall_id": "Hall_03",
+      "movie_id": "968051",
+      "movie_title": "The Nun II",
+      "start_slot": 46,
+      "start_time": "21:30",
+      "end_slot": 54,
+      "end_time": "23:30",
+      "expected_revenue": 1.3001163196687432e-06
+    },
+    {
+      "hall_id": "Hall_04",
+      "movie_id": "1008042",
+      "movie_title": "Talk to Me",
+      "start_slot": 1,
+      "start_time": "10:15",
+      "end_slot": 8,
+      "end_time": "12:00",
+      "expected_revenue": 1.4316876491016329e-24
+    },
+    {
+      "hall_id": "Hall_04",
+      "movie_id": "762430",
+      "movie_title": "Retribution",
+      "start_slot": 9,
+      "start_time": "12:15",
+      "end_slot": 16,
+      "end_time": "14:00",
+      "expected_revenue": 4.225415189511661e-18
+    },
+    {
+      "hall_id": "Hall_04",
+      "movie_id": "980489",
+      "movie_title": "Gran Turismo",
+      "start_slot": 17,
+      "start_time": "14:15",
+      "end_slot": 26,
+      "end_time": "16:30",
+      "expected_revenue": 3.454410360057872e-08
+    },
+    {
+      "hall_id": "Hall_04",
+      "movie_id": "565770",
+      "movie_title": "Blue Beetle",
+      "start_slot": 27,
+      "start_time": "16:45",
+      "end_slot": 36,
+      "end_time": "19:00",
+      "expected_revenue": 9.880065331009672e-07
+    },
+    {
+      "hall_id": "Hall_04",
+      "movie_id": "565770",
+      "movie_title": "Blue Beetle",
+      "start_slot": 37,
+      "start_time": "19:15",
+      "end_slot": 46,
+      "end_time": "21:30",
+      "expected_revenue": 2.3492895857359585e-06
+    },
+    {
+      "hall_id": "Hall_04",
+      "movie_id": "980489",
+      "movie_title": "Gran Turismo",
+      "start_slot": 50,
+      "start_time": "22:30",
+      "end_slot": 59,
+      "end_time": "00:45",
+      "expected_revenue": 2.15917274033003e-07
+    },
+    {
+      "hall_id": "Hall_05",
+      "movie_id": "385687",
+      "movie_title": "Fast X",
+      "start_slot": 3,
+      "start_time": "10:45",
+      "end_slot": 13,
+      "end_time": "13:15",
+      "expected_revenue": 1.602700756888198e-21
+    },
+    {
+      "hall_id": "Hall_05",
+      "movie_id": "678512",
+      "movie_title": "Sound of Freedom",
+      "start_slot": 14,
+      "start_time": "13:30",
+      "end_slot": 23,
+      "end_time": "15:45",
+      "expected_revenue": 1.4241095096850219e-09
+    },
+    {
+      "hall_id": "Hall_05",
+      "movie_id": "565770",
+      "movie_title": "Blue Beetle",
+      "start_slot": 24,
+      "start_time": "16:00",
+      "end_slot": 33,
+      "end_time": "18:15",
+      "expected_revenue": 4.1602019916803193e-07
+    },
+    {
+      "hall_id": "Hall_05",
+      "movie_id": "565770",
+      "movie_title": "Blue Beetle",
+      "start_slot": 34,
+      "start_time": "18:30",
+      "end_slot": 43,
+      "end_time": "20:45",
+      "expected_revenue": 1.9063365758643773e-06
+    },
+    {
+      "hall_id": "Hall_05",
+      "movie_id": "968051",
+      "movie_title": "The Nun II",
+      "start_slot": 44,
+      "start_time": "21:00",
+      "end_slot": 52,
+      "end_time": "23:00",
+      "expected_revenue": 1.2797099221709236e-06
+    },
+    {
+      "hall_id": "Hall_05",
+      "movie_id": "820609",
+      "movie_title": "No One Will Save You",
+      "start_slot": 53,
+      "start_time": "23:15",
+      "end_slot": 60,
+      "end_time": "01:00",
+      "expected_revenue": 1.532916286490532e-07
+    },
+    {
+      "hall_id": "Hall_06",
+      "movie_id": "1008042",
+      "movie_title": "Talk to Me",
+      "start_slot": 0,
+      "start_time": "10:00",
+      "end_slot": 7,
+      "end_time": "11:45",
+      "expected_revenue": 5.5833527475159595e-25
+    },
+    {
+      "hall_id": "Hall_06",
+      "movie_id": "615656",
+      "movie_title": "Meg 2: The Trench",
+      "start_slot": 8,
+      "start_time": "12:00",
+      "end_slot": 16,
+      "end_time": "14:00",
+      "expected_revenue": 6.898744579307218e-18
+    },
+    {
+      "hall_id": "Hall_06",
+      "movie_id": "980489",
+      "movie_title": "Gran Turismo",
+      "start_slot": 17,
+      "start_time": "14:15",
+      "end_slot": 26,
+      "end_time": "16:30",
+      "expected_revenue": 9.97940770683385e-08
+    },
+    {
+      "hall_id": "Hall_06",
+      "movie_id": "565770",
+      "movie_title": "Blue Beetle",
+      "start_slot": 27,
+      "start_time": "16:45",
+      "end_slot": 36,
+      "end_time": "19:00",
+      "expected_revenue": 2.854241095625016e-06
+    },
+    {
+      "hall_id": "Hall_06",
+      "movie_id": "565770",
+      "movie_title": "Blue Beetle",
+      "start_slot": 37,
+      "start_time": "19:15",
+      "end_slot": 46,
+      "end_time": "21:30",
+      "expected_revenue": 6.786836581014991e-06
+    },
+    {
+      "hall_id": "Hall_06",
+      "movie_id": "968051",
+      "movie_title": "The Nun II",
+      "start_slot": 47,
+      "start_time": "21:45",
+      "end_slot": 55,
+      "end_time": "23:45",
+      "expected_revenue": 3.2700175984682603e-06
+    }
+  ]
+}

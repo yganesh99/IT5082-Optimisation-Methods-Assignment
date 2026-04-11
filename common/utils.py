@@ -1,12 +1,20 @@
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 import numpy as np
-from scipy.stats import norm
 
 _MINUTES_PER_DAY = 24 * 60
 _CINEPLEX_CONFIG_PATH = Path(__file__).resolve().parent / "cineplex_config.json"
+_FALLBACK_CINEPLEX_CONFIG_PATH = Path(__file__).resolve().parent / "small_config.json"
+
+
+def _gaussian_pdf(x: np.ndarray, mu: float, sigma: float) -> np.ndarray:
+    sigma = max(float(sigma), 1e-9)
+    coeff = 1.0 / (sigma * math.sqrt(2.0 * math.pi))
+    z = (x - float(mu)) / sigma
+    return coeff * np.exp(-0.5 * z * z)
 
 
 def _parse_hhmm(value: str) -> tuple[int, int]:
@@ -20,7 +28,9 @@ def _parse_hhmm(value: str) -> tuple[int, int]:
 
 
 def _load_scheduling() -> tuple[int, int, int, bool]:
-    with _CINEPLEX_CONFIG_PATH.open(encoding="utf-8") as f:
+    # Backward compatible: prefer cineplex_config.json, otherwise use small_config.json.
+    path = _CINEPLEX_CONFIG_PATH if _CINEPLEX_CONFIG_PATH.is_file() else _FALLBACK_CINEPLEX_CONFIG_PATH
+    with path.open(encoding="utf-8") as f:
         constraints = json.load(f)["constraints"]
     duration = int(constraints["slot_duration_minutes"])
     zh, zm = _parse_hhmm(constraints["opening_time"])
@@ -90,7 +100,7 @@ def generate_robust_demand_matrix(movies, day_type, num_slots=60):
     # 2. TimeMulti (Vector of 60 slots - general 'prime time' pulse)
     # Even regardless of genre, 7-9 PM is generally busier
     time_slots = np.arange(num_slots)
-    time_multi = norm.pdf(time_slots, 40, 10) # General peak at slot 40
+    time_multi = _gaussian_pdf(time_slots, 40, 10) # General peak at slot 40
     time_multi = time_multi / time_multi.max() 
 
     matrix = np.zeros((len(movies), num_slots))
@@ -108,7 +118,7 @@ def generate_robust_demand_matrix(movies, day_type, num_slots=60):
         # Animation peaks early, Horror late, etc.
         mu = m['genre_peak_slot']
         sigma = m['genre_sigma']
-        genre_fit = norm.pdf(time_slots, mu, sigma)
+        genre_fit = _gaussian_pdf(time_slots, mu, sigma)
         genre_fit = genre_fit / genre_fit.max()
 
         # D. Final calculation per slot
