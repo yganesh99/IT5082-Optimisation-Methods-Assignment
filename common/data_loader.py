@@ -20,9 +20,25 @@ def load_tmdb_movies(csv_path: Optional[Union[str, Path]] = None) -> pd.DataFram
     return pd.read_csv(path)
 
 
+def _is_adult_cell(value: object) -> bool:
+    """True if TMDB marks the row as adult (robust to CSV string/object dtypes)."""
+    if pd.isna(value):
+        return False
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return float(value) == 1.0
+    t = str(value).strip().lower()
+    return t in ("true", "1", "yes")
+
+
 def clean_movies(df: pd.DataFrame) -> pd.DataFrame:
-    """Drop rows with zero runtime or missing genres."""
-    return df.loc[(df["runtime"] != 0) & df["genres"].notna()].copy()
+    """Drop rows with zero runtime, missing genres, or TMDB adult flag."""
+    mask = (df["runtime"] != 0) & df["genres"].notna()
+    # Skip if column absent (e.g. custom CSV) — backward compatible.
+    if "adult" in df.columns:
+        mask &= ~df["adult"].map(_is_adult_cell)
+    return df.loc[mask].copy()
 
 
 def normalize_popularity_minmax(df: pd.DataFrame) -> pd.DataFrame:
