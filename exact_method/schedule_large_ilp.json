@@ -2,7 +2,7 @@
   "metadata": {
     "algorithm": "ILP (OR-Tools CBC)",
     "solver_status": "OPTIMAL",
-    "execution_time_seconds": 87.89391187496949,
+    "execution_time_seconds": 86.62277808296494,
     "total_revenue": 46747.22363905922,
     "objective_value": 46747.22363905922,
     "min_shows_penalty_per_unit": 177127.85840006688,

@@ -1,20 +1,28 @@
 #!/usr/bin/env python3
 """
-Validate a schedule JSON (GA or ILP) against cineplex rules and revenue consistency.
+Validate a schedule JSON from the exact (ILP) or GA method against cineplex rules.
+
+Expected top-level shape (see README): ``metadata`` (run summary) and ``schedule``
+(list of screenings). Each screening must include at least ``hall_id``, ``movie_id``,
+``start_slot``, ``end_slot``, and ``expected_revenue``; optional fields such as
+``movie_title``, ``start_time``, and ``end_time`` are accepted.
 
 Checks:
+  - JSON structure matches the documented output contract
+  - Known ``hall_id`` values from the cinema config
   - Hall overlaps + cleaning buffer (hall locked until end_slot + buffer)
   - Lobby congestion (simultaneous starts per slot <= lobby cap)
   - Operating horizon (slots within [0, num_slots); end_slot <= num_slots)
-  - min_shows per movie from the CSV
-  - Expected revenue matches recomputation from common demand/revenue logic
+  - min_shows per movie from the CSV (unless ``relax_min_shows`` for soft ILP runs)
+  - Optional: ``start_time`` / ``end_time`` when given as ``HH:MM`` align with slot indices
+  - Expected revenue matches recomputation from shared demand/revenue logic
 """
 from __future__ import annotations
 
 import argparse
-import importlib.util
 import json
 import math
+import re
 import sys
 from collections import Counter
 from pathlib import Path
@@ -23,29 +31,36 @@ _REPO_ROOT = Path(__file__).resolve().parent
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-_ga_path = _REPO_ROOT / "heuristic(GA)" / "ga_solve.py"
-_ga_spec = importlib.util.spec_from_file_location("ga_solve", _ga_path)
-if _ga_spec is None or _ga_spec.loader is None:
-    raise ImportError(f"Cannot load GA solver from {_ga_path}")
-_ga_mod = importlib.util.module_from_spec(_ga_spec)
-sys.modules["ga_solve"] = _ga_mod
-_ga_spec.loader.exec_module(_ga_mod)
-GAProblem = _ga_mod.GAProblem  # noqa: E402
+from common.scheduling_config import num_slots_from_config, opening_minutes_from_constraints, slot_to_wall_clock
+from heuristic_ga import GAProblem
+
+_HHMM_RE = re.compile(r"^\d{1,2}:\d{2}$")
+
+_SCHEDULE_REQUIRED_KEYS = frozenset({"hall_id", "movie_id", "start_slot", "end_slot", "expected_revenue"})
 
 
-def _compute_num_slots_from_config(config: dict) -> int:
-    constraints = config["constraints"]
-    slot_duration = int(constraints["slot_duration_minutes"])
-
-    def clock(hhmm: str) -> int:
-        h, m = (int(x) for x in hhmm.strip().split(":"))
-        return h * 60 + m
-
-    opening = clock(constraints["opening_time"])
-    closing = clock(constraints["closing_time"])
-    if bool(constraints.get("closing_time_is_next_calendar_day", True)) and closing <= opening:
-        closing += 24 * 60
-    return (closing - opening) // slot_duration
+def _structural_issues(data: object) -> list[str]:
+    issues: list[str] = []
+    if not isinstance(data, dict):
+        return ["root JSON must be an object"]
+    if "schedule" not in data:
+        issues.append('missing top-level key "schedule"')
+    elif not isinstance(data["schedule"], list):
+        issues.append('"schedule" must be a list')
+    if "metadata" not in data:
+        issues.append('missing top-level key "metadata" (README output contract)')
+    elif not isinstance(data["metadata"], dict):
+        issues.append('"metadata" must be an object')
+    if not isinstance(data.get("schedule"), list):
+        return issues
+    for i, row in enumerate(data["schedule"]):
+        if not isinstance(row, dict):
+            issues.append(f"schedule[{i}] must be an object")
+            continue
+        missing = sorted(_SCHEDULE_REQUIRED_KEYS - row.keys())
+        if missing:
+            issues.append(f"schedule[{i}] missing required keys: {', '.join(missing)}")
+    return issues
 
 
 def validate(
@@ -56,10 +71,16 @@ def validate(
     day_type: str | None = None,
     revenue_rtol: float = 1e-5,
     revenue_atol: float = 1e-4,
+    relax_min_shows: bool = False,
+    check_wall_clock_strings: bool = True,
 ) -> tuple[bool, list[str]]:
     data = json.loads(schedule_json.read_text(encoding="utf-8"))
-    meta = data.get("metadata") or {}
-    schedule = data.get("schedule") or []
+    issues = _structural_issues(data)
+    if issues:
+        return False, issues
+
+    meta = data["metadata"]
+    schedule = data["schedule"]
 
     if day_type is None:
         day_type = str(meta.get("day_type") or "weekend")
@@ -68,16 +89,24 @@ def validate(
     constraints = config["constraints"]
     cleaning_buffer = int(constraints.get("cleaning_buffer_slots", 1))
     lobby_max = int(constraints.get("lobby_max_simultaneous_starts", 2))
-    num_slots = _compute_num_slots_from_config(config)
+    num_slots = num_slots_from_config(config)
+    opening_min = opening_minutes_from_constraints(constraints)
+    slot_duration = int(constraints["slot_duration_minutes"])
+
+    valid_hall_ids = {str(h["id"]) for h in config["halls"]}
 
     problem = GAProblem.from_files(movies_csv, config_json, day_type=day_type)
     if problem.num_slots != num_slots:
         return False, [f"internal num_slots mismatch: problem={problem.num_slots} config={num_slots}"]
 
-    issues: list[str] = []
+    issues = []
 
     # --- Structural: slots & end within horizon (1:00 AM closure encoded as num_slots) ---
     for i, row in enumerate(schedule):
+        hid = str(row["hall_id"])
+        if hid not in valid_hall_ids:
+            issues.append(f"row {i}: unknown hall_id {hid!r} (not in config halls)")
+
         t0 = int(row["start_slot"])
         end = int(row["end_slot"])
         if t0 < 0 or t0 >= num_slots:
@@ -87,12 +116,26 @@ def validate(
                 f"row {i}: end_slot {end} exceeds horizon (max end_slot {num_slots} — exclusive end after last slot)"
             )
 
+        if check_wall_clock_strings:
+            for key, slot in ("start_time", t0), ("end_time", end):
+                val = row.get(key)
+                if val is None:
+                    continue
+                if not isinstance(val, str) or not _HHMM_RE.match(val.strip()):
+                    continue
+                parts = val.strip().split(":")
+                norm = f"{int(parts[0]):02d}:{int(parts[1]):02d}"
+                expected = slot_to_wall_clock(slot, opening_min, slot_duration)
+                if norm != expected:
+                    issues.append(
+                        f"row {i}: {key} {val!r} does not match slot {slot} "
+                        f"(expected {expected!r} from config opening_time / slot duration)"
+                    )
+
     # --- Runtime consistency & overlap + buffer per hall ---
     by_hall: dict[str, list[dict]] = {}
     for row in schedule:
-        by_hall.setdefault(row["hall_id"], []).append(row)
-
-    slot_duration = int(constraints["slot_duration_minutes"])
+        by_hall.setdefault(str(row["hall_id"]), []).append(row)
 
     import pandas as pd
 
@@ -136,13 +179,16 @@ def validate(
                 f"lobby congestion: {cnt} screenings start at slot {t} (max allowed {lobby_max})"
             )
 
-    # --- min_shows ---
-    min_by_id = {str(movies_df.at[i, "id"]): int(movies_df.at[i, "min_shows"]) for i in range(len(movies_df))}
-    show_counts = Counter(str(r["movie_id"]) for r in schedule)
-    for mid, need in min_by_id.items():
-        got = show_counts.get(mid, 0)
-        if got < need:
-            issues.append(f"movie {mid}: min_shows {need} not met (got {got})")
+    # --- min_shows (strict unless --relax-min-shows, e.g. ILP with soft contractual penalty) ---
+    if not relax_min_shows:
+        min_by_id = {
+            str(movies_df.at[i, "id"]): int(movies_df.at[i, "min_shows"]) for i in range(len(movies_df))
+        }
+        show_counts = Counter(str(r["movie_id"]) for r in schedule)
+        for mid, need in min_by_id.items():
+            got = show_counts.get(mid, 0)
+            if got < need:
+                issues.append(f"movie {mid}: min_shows {need} not met (got {got})")
 
     # --- Revenue ---
     max_rev = problem.max_screening_revenue
@@ -187,9 +233,26 @@ def main() -> int:
         choices=["weekday", "weekend"],
         help="Demand profile (default: read from JSON metadata)",
     )
+    parser.add_argument(
+        "--relax-min-shows",
+        action="store_true",
+        help="Do not require CSV min_shows counts (use for ILP outputs with soft contractual penalties)",
+    )
+    parser.add_argument(
+        "--no-wall-clock-check",
+        action="store_true",
+        help="Skip validating start_time/end_time strings against slot indices",
+    )
     args = parser.parse_args()
 
-    ok, issues = validate(args.schedule_json, args.movies_csv, args.config_json, day_type=args.day_type)
+    ok, issues = validate(
+        args.schedule_json,
+        args.movies_csv,
+        args.config_json,
+        day_type=args.day_type,
+        relax_min_shows=args.relax_min_shows,
+        check_wall_clock_strings=not args.no_wall_clock_check,
+    )
     if ok:
         print("OK: schedule passes all checks.")
         return 0

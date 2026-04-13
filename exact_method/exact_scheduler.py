@@ -17,7 +17,12 @@ _REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from common.utils import calculate_screening_revenue, generate_robust_demand_matrix, parse_hhmm
+from common.scheduling_config import (
+    num_slots_from_config,
+    opening_minutes_from_constraints,
+    slot_to_wall_clock,
+)
+from common.utils import calculate_screening_revenue, generate_robust_demand_matrix
 
 
 @dataclass(frozen=True)
@@ -25,37 +30,6 @@ class Hall:
     id: str
     capacity: int
     average_ticket_price: float
-
-
-def _clock_to_minutes(value: str) -> int:
-    h, m = parse_hhmm(value)
-    return h * 60 + m
-
-
-def _compute_num_slots(config: dict[str, Any]) -> int:
-    constraints = config["constraints"]
-    slot_duration = int(constraints["slot_duration_minutes"])
-    opening = _clock_to_minutes(constraints["opening_time"])
-    closing = _clock_to_minutes(constraints["closing_time"])
-    closing_next_day = bool(constraints.get("closing_time_is_next_calendar_day", True))
-
-    if closing_next_day and closing <= opening:
-        closing += 24 * 60
-    if closing <= opening:
-        raise ValueError("closing time must be after opening time")
-
-    span = closing - opening
-    if span % slot_duration != 0:
-        raise ValueError("operating window is not divisible by slot duration")
-    return span // slot_duration
-
-
-def _slot_to_time(slot_index: int, opening_time: str, slot_duration_minutes: int) -> str:
-    opening = _clock_to_minutes(opening_time)
-    total = opening + slot_index * slot_duration_minutes
-    total %= 24 * 60
-    h, m = divmod(total, 60)
-    return f"{h:02d}:{m:02d}"
 
 
 def _load_halls(config: dict[str, Any]) -> list[Hall]:
@@ -115,11 +89,11 @@ def solve_schedule_ilp(
 
     constraints = config["constraints"]
     slot_duration = int(constraints["slot_duration_minutes"])
-    opening_time = str(constraints["opening_time"])
+    opening_min = opening_minutes_from_constraints(constraints)
     cleaning_buffer = int(constraints.get("cleaning_buffer_slots", 1))
     lobby_max_starts = int(constraints.get("lobby_max_simultaneous_starts", 2))
 
-    num_slots = _compute_num_slots(config)
+    num_slots = num_slots_from_config(config)
     halls = _load_halls(config)
 
     movies = movies.copy()
@@ -239,9 +213,9 @@ def solve_schedule_ilp(
                     "movie_title": str(movies.at[m, "title"]),
                     "weeks_since_release": int(movies.at[m, "weeks_since_release"]),
                     "start_slot": int(t),
-                    "start_time": _slot_to_time(t, opening_time, slot_duration),
+                    "start_time": slot_to_wall_clock(t, opening_min, slot_duration),
                     "end_slot": int(end_slot),
-                    "end_time": _slot_to_time(end_slot, opening_time, slot_duration),
+                    "end_time": slot_to_wall_clock(end_slot, opening_min, slot_duration),
                     "expected_revenue": float(revenue[(m, h_idx, t)]),
                 }
             )

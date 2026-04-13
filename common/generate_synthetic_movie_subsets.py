@@ -105,6 +105,8 @@ def _pick_top_movies(df: pd.DataFrame, n: int) -> pd.DataFrame:
     work = df.copy()
     work["popularity"] = pd.to_numeric(work["popularity"], errors="coerce")
     work["vote_count"] = pd.to_numeric(work["vote_count"], errors="coerce").fillna(0).astype(int)
+    work["runtime"] = pd.to_numeric(work["runtime"], errors="coerce")
+    work = work.loc[work["runtime"] >= 60]
     work = work.loc[work["release_date"].notna() & (work["release_date"].astype(str).str.strip() != "")]
     work["_release_parsed"] = pd.to_datetime(work["release_date"], errors="coerce")
     work = work.loc[work["_release_parsed"].notna()].drop(columns=["_release_parsed"])
@@ -140,7 +142,7 @@ def main() -> int:
         "--output-dir",
         type=Path,
         default=_REPO_COMMON,
-        help="Directory for movies_small.csv, movies_medium.csv, movies_large.csv",
+        help="Directory for movies_small.csv, movies_medium.csv, and movies_large.csv",
     )
     parser.add_argument(
         "--as-of",
