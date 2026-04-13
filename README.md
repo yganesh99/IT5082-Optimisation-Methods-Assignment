@@ -159,7 +159,7 @@ To test and report scalability without changing solver internals, run:
 What it does:
 
 - Runs ILP (`exact_method/exact_scheduler.py`) for each tier and each ILP time limit.
-- Runs GA (`common/ga_solve.py`) for each tier and each GA seed.
+- Runs GA (`heuristic(GA)/ga_solve.py`) for each tier and each GA seed.
 - Validates every generated schedule using `validator.py`.
 - Writes per-run JSONs under `benchmark_outputs/<tier>/`.
 - Writes one analysis-ready table: `benchmark_outputs/benchmark_summary.csv`.

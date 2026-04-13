@@ -1,0 +1,163 @@
+{
+  "metadata": {
+    "algorithm": "ILP (OR-Tools CBC)",
+    "solver_status": "OPTIMAL",
+    "execution_time_seconds": 0.16385058301966637,
+    "total_revenue": 2987.7027186421415,
+    "objective_value": 2987.7027186421415,
+    "min_shows_penalty_per_unit": 47164.22265090539,
+    "fitness_score": null,
+    "constraints_violated": 0,
+    "min_shows_deficit_total": 0,
+    "min_shows_deficit_by_movie": [],
+    "day_type": "weekday",
+    "num_slots": 60,
+    "num_halls": 2,
+    "num_movies": 6
+  },
+  "schedule": [
+    {
+      "hall_id": "Hall_01",
+      "movie_id": "1008042",
+      "movie_title": "Talk to Me",
+      "weeks_since_release": 9,
+      "start_slot": 0,
+      "start_time": "10:00",
+      "end_slot": 7,
+      "end_time": "11:45",
+      "expected_revenue": 5.3312920972119785e-17
+    },
+    {
+      "hall_id": "Hall_01",
+      "movie_id": "1008042",
+      "movie_title": "Talk to Me",
+      "weeks_since_release": 9,
+      "start_slot": 8,
+      "start_time": "12:00",
+      "end_slot": 15,
+      "end_time": "13:45",
+      "expected_revenue": 1.208962098046346e-10
+    },
+    {
+      "hall_id": "Hall_01",
+      "movie_id": "762430",
+      "movie_title": "Retribution",
+      "weeks_since_release": 5,
+      "start_slot": 16,
+      "start_time": "14:00",
+      "end_slot": 23,
+      "end_time": "15:45",
+      "expected_revenue": 2.261966629227474e-05
+    },
+    {
+      "hall_id": "Hall_01",
+      "movie_id": "980489",
+      "movie_title": "Gran Turismo",
+      "weeks_since_release": 7,
+      "start_slot": 24,
+      "start_time": "16:00",
+      "end_slot": 33,
+      "end_time": "18:15",
+      "expected_revenue": 105.50484977142865
+    },
+    {
+      "hall_id": "Hall_01",
+      "movie_id": "565770",
+      "movie_title": "Blue Beetle",
+      "weeks_since_release": 6,
+      "start_slot": 34,
+      "start_time": "18:30",
+      "end_slot": 43,
+      "end_time": "20:45",
+      "expected_revenue": 627.4432579353678
+    },
+    {
+      "hall_id": "Hall_01",
+      "movie_id": "968051",
+      "movie_title": "The Nun II",
+      "weeks_since_release": 3,
+      "start_slot": 44,
+      "start_time": "21:00",
+      "end_slot": 52,
+      "end_time": "23:00",
+      "expected_revenue": 421.19811000062606
+    },
+    {
+      "hall_id": "Hall_01",
+      "movie_id": "762430",
+      "movie_title": "Retribution",
+      "weeks_since_release": 5,
+      "start_slot": 53,
+      "start_time": "23:15",
+      "end_slot": 60,
+      "end_time": "01:00",
+      "expected_revenue": 44.57070590295964
+    },
+    {
+      "hall_id": "Hall_02",
+      "movie_id": "1008042",
+      "movie_title": "Talk to Me",
+      "weeks_since_release": 9,
+      "start_slot": 0,
+      "start_time": "10:00",
+      "end_slot": 7,
+      "end_time": "11:45",
+      "expected_revenue": 7.67706061998525e-17
+    },
+    {
+      "hall_id": "Hall_02",
+      "movie_id": "615656",
+      "movie_title": "Meg 2: The Trench",
+      "weeks_since_release": 8,
+      "start_slot": 8,
+      "start_time": "12:00",
+      "end_slot": 16,
+      "end_time": "14:00",
+      "expected_revenue": 9.485712748616701e-10
+    },
+    {
+      "hall_id": "Hall_02",
+      "movie_id": "980489",
+      "movie_title": "Gran Turismo",
+      "weeks_since_release": 7,
+      "start_slot": 17,
+      "start_time": "14:15",
+      "end_slot": 26,
+      "end_time": "16:30",
+      "expected_revenue": 13.72159728775804
+    },
+    {
+      "hall_id": "Hall_02",
+      "movie_id": "565770",
+      "movie_title": "Blue Beetle",
+      "weeks_since_release": 6,
+      "start_slot": 27,
+      "start_time": "16:45",
+      "end_slot": 36,
+      "end_time": "19:00",
+      "expected_revenue": 392.45562489160534
+    },
+    {
+      "hall_id": "Hall_02",
+      "movie_id": "565770",
+      "movie_title": "Blue Beetle",
+      "weeks_since_release": 6,
+      "start_slot": 37,
+      "start_time": "19:15",
+      "end_slot": 46,
+      "end_time": "21:30",
+      "expected_revenue": 933.1840241254007
+    },
+    {
+      "hall_id": "Hall_02",
+      "movie_id": "968051",
+      "movie_title": "The Nun II",
+      "weeks_since_release": 3,
+      "start_slot": 47,
+      "start_time": "21:45",
+      "end_slot": 55,
+      "end_time": "23:45",
+      "expected_revenue": 449.62452610625945
+    }
+  ]
+}

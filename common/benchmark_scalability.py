@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import sys
 from pathlib import Path
@@ -13,7 +14,14 @@ _REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from common.ga_solve import GAProblem
+_ga_path = _REPO_ROOT / "heuristic(GA)" / "ga_solve.py"
+_ga_spec = importlib.util.spec_from_file_location("ga_solve", _ga_path)
+if _ga_spec is None or _ga_spec.loader is None:
+    raise ImportError(f"Cannot load GA solver from {_ga_path}")
+_ga_mod = importlib.util.module_from_spec(_ga_spec)
+sys.modules["ga_solve"] = _ga_mod
+_ga_spec.loader.exec_module(_ga_mod)
+GAProblem = _ga_mod.GAProblem
 from exact_method.exact_scheduler import solve_schedule_ilp
 from validator import validate
 
