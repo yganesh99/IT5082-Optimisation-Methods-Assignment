@@ -343,32 +343,20 @@ def decode_chromosome(
 def _evaluate(
     genes: np.ndarray,
     problem: GAProblem,
-    lobby_penalty: float,
     min_shows_penalty: float,
-) -> tuple[float, list[dict[str, Any]], int, int]:
-    """Return (fitness, schedule, lobby_violations, min_shows_deficit_total)."""
+) -> tuple[float, list[dict[str, Any]], int]:
+    """Return (fitness, schedule, min_shows_deficit_total)."""
     schedule = decode_chromosome(genes, problem)
 
     total_revenue = sum(s["expected_revenue"] for s in schedule)
 
-    # Lobby violations
-    start_counts = Counter(s["start_slot"] for s in schedule)
-    lobby_violations = sum(
-        max(0, cnt - problem.lobby_max_starts) for cnt in start_counts.values()
-    )
-
-    # min_shows deficit
     show_counts: Counter[int] = Counter(s["movie_index"] for s in schedule)
     min_shows_deficit = sum(
         max(0, m.min_shows - show_counts.get(m.index, 0)) for m in problem.movies
     )
 
-    fitness = (
-        total_revenue
-        - lobby_penalty * lobby_violations
-        - min_shows_penalty * min_shows_deficit
-    )
-    return fitness, schedule, lobby_violations, min_shows_deficit
+    fitness = total_revenue - min_shows_penalty * min_shows_deficit
+    return fitness, schedule, min_shows_deficit
 
 
 # ---------------------------------------------------------------------------
@@ -392,7 +380,6 @@ def solve_schedule_ga(
     mutation_percent_genes: float = 15.0,
     keep_elitism: int = 5,
     # Penalty weights
-    lobby_penalty: float | None = None,
     min_shows_penalty: float | None = None,
 ) -> dict[str, Any]:
     movies_csv = Path(movies_csv)
@@ -401,8 +388,6 @@ def solve_schedule_ga(
     problem = GAProblem.from_files(movies_csv, config_json, day_type=day_type)
 
     max_rev = problem.max_screening_revenue
-    if lobby_penalty is None:
-        lobby_penalty = max_rev * 100.0
     if min_shows_penalty is None:
         min_shows_penalty = max_rev * 50.0
 
@@ -428,7 +413,7 @@ def solve_schedule_ga(
         initial_pop[i] = variant
 
     def fitness_func(ga_inst: pygad.GA, solution: np.ndarray, sol_idx: int) -> float:
-        fit, *_ = _evaluate(solution, problem, lobby_penalty, min_shows_penalty)
+        fit, *_ = _evaluate(solution, problem, min_shows_penalty)
         return float(fit)
 
     avg_fitness_history: list[float] = []
@@ -465,8 +450,8 @@ def solve_schedule_ga(
     elapsed = time.perf_counter() - start_t
 
     best_solution, best_fitness, _best_idx = ga_instance.best_solution()
-    fitness, schedule, lobby_viol, ms_deficit = _evaluate(
-        best_solution, problem, lobby_penalty, min_shows_penalty
+    fitness, schedule, ms_deficit = _evaluate(
+        best_solution, problem, min_shows_penalty
     )
 
     # Build min_shows deficit detail
@@ -512,7 +497,7 @@ def solve_schedule_ga(
             "execution_time_seconds": elapsed,
             "total_revenue": total_revenue,
             "fitness_score": float(fitness),
-            "constraints_violated": lobby_viol + ms_deficit,
+            "constraints_violated": ms_deficit,
             "min_shows_deficit_total": ms_deficit,
             "min_shows_deficit_by_movie": deficit_by_movie,
             "day_type": day_type,
@@ -553,7 +538,6 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--mutation-type", type=str, default="random")
     parser.add_argument("--mutation-percent-genes", type=float, default=15.0)
     parser.add_argument("--keep-elitism", type=int, default=5)
-    parser.add_argument("--lobby-penalty", type=float, default=None)
     parser.add_argument("--min-shows-penalty", type=float, default=None)
     return parser.parse_args()
 
@@ -574,7 +558,6 @@ def main() -> int:
         mutation_type=args.mutation_type,
         mutation_percent_genes=args.mutation_percent_genes,
         keep_elitism=args.keep_elitism,
-        lobby_penalty=args.lobby_penalty,
         min_shows_penalty=args.min_shows_penalty,
     )
 
