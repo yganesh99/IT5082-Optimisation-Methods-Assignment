@@ -27,6 +27,9 @@ def _parse_hhmm(value: str) -> tuple[int, int]:
     return h, m
 
 
+parse_hhmm = _parse_hhmm
+
+
 def _load_scheduling() -> tuple[int, int, int, bool]:
     # Backward compatible: prefer cineplex_config.json, otherwise use small_config.json.
     path = _CINEPLEX_CONFIG_PATH if _CINEPLEX_CONFIG_PATH.is_file() else _FALLBACK_CINEPLEX_CONFIG_PATH

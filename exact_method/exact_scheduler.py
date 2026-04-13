@@ -17,7 +17,7 @@ _REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from common.utils import calculate_screening_revenue, generate_robust_demand_matrix
+from common.utils import calculate_screening_revenue, generate_robust_demand_matrix, parse_hhmm
 
 
 @dataclass(frozen=True)
@@ -27,18 +27,8 @@ class Hall:
     average_ticket_price: float
 
 
-def _parse_hhmm(value: str) -> tuple[int, int]:
-    parts = value.strip().split(":")
-    if len(parts) != 2:
-        raise ValueError(f"expected 'HH:MM', got {value!r}")
-    h, m = int(parts[0], 10), int(parts[1], 10)
-    if not (0 <= h <= 23 and 0 <= m <= 59):
-        raise ValueError(f"out-of-range time {value!r}")
-    return h, m
-
-
 def _clock_to_minutes(value: str) -> int:
-    h, m = _parse_hhmm(value)
+    h, m = parse_hhmm(value)
     return h * 60 + m
 
 
@@ -104,6 +94,7 @@ def solve_schedule_ilp(
     config_json: Path,
     day_type: str = "weekday",
     time_limit_seconds: int = 60,
+    min_shows_penalty: float | None = None,
 ) -> dict[str, Any]:
     movies = pd.read_csv(movies_csv).reset_index(drop=True)
     config = json.loads(config_json.read_text(encoding="utf-8"))
@@ -184,14 +175,28 @@ def solve_schedule_ilp(
                     )
                 )
 
+    max_rev = max(revenue.values(), default=0.0)
+    if min_shows_penalty is None:
+        penalty_per_undershot = max(max_rev * 50.0, 1e-4)
+    else:
+        penalty_per_undershot = float(min_shows_penalty)
+
+    undershot: dict[int, pywraplp.Variable] = {}
+    for m in range(len(movies)):
+        cap = int(movies.at[m, "min_shows"])
+        undershot[m] = solver.IntVar(0, cap, f"undershot_m{m}")
+
     objective = solver.Objective()
     for key, var in x.items():
         objective.SetCoefficient(var, revenue[key])
+    for m, uvar in undershot.items():
+        objective.SetCoefficient(uvar, -penalty_per_undershot)
     objective.SetMaximization()
 
-    # Contractual minimum shows per movie.
+    # Soft contractual minimum shows: sum(x) + undershot_m >= min_shows_m.
     for m in range(len(movies)):
         ct = solver.Constraint(float(movies.at[m, "min_shows"]), solver.infinity())
+        ct.SetCoefficient(undershot[m], 1)
         for h_idx, _ in enumerate(halls):
             for t in valid_starts_by_movie[m]:
                 ct.SetCoefficient(x[(m, h_idx, t)], 1)
@@ -232,6 +237,7 @@ def solve_schedule_ilp(
                     "hall_id": halls[h_idx].id,
                     "movie_id": str(movies.at[m, "id"]),
                     "movie_title": str(movies.at[m, "title"]),
+                    "weeks_since_release": int(movies.at[m, "weeks_since_release"]),
                     "start_slot": int(t),
                     "start_time": _slot_to_time(t, opening_time, slot_duration),
                     "end_slot": int(end_slot),
@@ -251,14 +257,43 @@ def solve_schedule_ilp(
         pywraplp.Solver.NOT_SOLVED: "NOT_SOLVED",
     }.get(status, "UNKNOWN")
 
+    total_revenue = float(sum(r["expected_revenue"] for r in schedule))
+    min_shows_deficit_by_movie: list[dict[str, Any]] = []
+    min_shows_deficit_total = 0
+    objective_value: float | None = None
+
+    if status in (pywraplp.Solver.OPTIMAL, pywraplp.Solver.FEASIBLE):
+        for m in range(len(movies)):
+            d = int(round(undershot[m].solution_value()))
+            min_shows_deficit_total += d
+            if d > 0:
+                min_shows_deficit_by_movie.append(
+                    {
+                        "movie_id": str(movies.at[m, "id"]),
+                        "movie_title": str(movies.at[m, "title"]),
+                        "deficit": d,
+                    }
+                )
+        objective_value = total_revenue - penalty_per_undershot * min_shows_deficit_total
+
     return {
         "metadata": {
             "algorithm": "ILP (OR-Tools CBC)",
             "solver_status": status_name,
             "execution_time_seconds": elapsed,
-            "total_revenue": float(sum(r["expected_revenue"] for r in schedule)),
+            "total_revenue": total_revenue,
+            "objective_value": objective_value,
+            "min_shows_penalty_per_unit": penalty_per_undershot,
             "fitness_score": None,
-            "constraints_violated": 0 if status in (pywraplp.Solver.OPTIMAL, pywraplp.Solver.FEASIBLE) else None,
+            "constraints_violated": min_shows_deficit_total
+            if status in (pywraplp.Solver.OPTIMAL, pywraplp.Solver.FEASIBLE)
+            else None,
+            "min_shows_deficit_total": min_shows_deficit_total
+            if status in (pywraplp.Solver.OPTIMAL, pywraplp.Solver.FEASIBLE)
+            else None,
+            "min_shows_deficit_by_movie": min_shows_deficit_by_movie
+            if status in (pywraplp.Solver.OPTIMAL, pywraplp.Solver.FEASIBLE)
+            else None,
             "day_type": day_type,
             "num_slots": num_slots,
             "num_halls": len(halls),
@@ -301,6 +336,12 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Optional file path to write JSON output",
     )
+    parser.add_argument(
+        "--min-shows-penalty",
+        type=float,
+        default=None,
+        help="Penalty per missed min_shows unit (default: max_screening_revenue * 50, min 1e-4)",
+    )
     return parser.parse_args()
 
 
@@ -311,6 +352,7 @@ def main() -> int:
         config_json=args.config_json,
         day_type=args.day_type,
         time_limit_seconds=args.time_limit_seconds,
+        min_shows_penalty=args.min_shows_penalty,
     )
 
     text = json.dumps(result, ensure_ascii=False, indent=2)

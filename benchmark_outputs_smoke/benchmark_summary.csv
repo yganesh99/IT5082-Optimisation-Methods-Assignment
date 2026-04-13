@@ -1,0 +1,3 @@
+tier,algorithm,seed,ilp_time_limit_seconds,ga_population_size,ga_generations,solver_status,execution_time_seconds,total_revenue,constraints_violated,num_movies,num_halls,valid_schedule,validation_issue_count,output_json,peak_rss_bytes,tracemalloc_peak_bytes,last_improvement_generation
+small,ILP,,5.0,,,OPTIMAL,0.16883933392819017,2987.7027186421415,0,6,2,True,0,benchmark_outputs_smoke/small/ilp_t5s.json,,,
+small,GA,11.0,,50.0,50.0,COMPLETED,0.7715488339308649,2708.929486406608,0,6,2,True,0,benchmark_outputs_smoke/small/ga_seed11.json,110215168.0,75608.0,16.0

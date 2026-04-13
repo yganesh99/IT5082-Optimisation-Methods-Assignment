@@ -17,6 +17,8 @@ from data_loader import default_tmdb_csv_path, load_prepared_tmdb_movies
 
 _REPO_COMMON = Path(__file__).resolve().parent
 _DEFAULT_INPUT = default_tmdb_csv_path()
+# Fixed reference so weeks_since_release is reproducible and aligned with a typical summer release window.
+_DEFAULT_WEEKS_AS_OF = date(2023, 10, 1)
 
 # Audience curve parameters by genre family. ``genre_peak_slot`` is a 15-minute slot index
 # (same grid as cineplex configs). ``genre_sigma`` controls spread (wider = flatter demand).
@@ -144,12 +146,15 @@ def main() -> int:
         "--as-of",
         type=lambda s: date.fromisoformat(s),
         default=None,
-        help="Reference date for weeks_since_release (ISO YYYY-MM-DD). Default: today (UTC).",
+        help=(
+            "Reference date for weeks_since_release (ISO YYYY-MM-DD). "
+            f"Default: {_DEFAULT_WEEKS_AS_OF.isoformat()}."
+        ),
     )
     parser.add_argument("--seed", type=int, default=42, help="RNG seed for min_shows and subset sizes.")
     args = parser.parse_args()
 
-    as_of = args.as_of if args.as_of is not None else date.today()
+    as_of = args.as_of if args.as_of is not None else _DEFAULT_WEEKS_AS_OF
     rng = random.Random(args.seed)
 
     small_n = rng.randint(4, 6)

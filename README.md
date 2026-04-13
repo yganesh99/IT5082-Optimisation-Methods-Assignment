@@ -149,3 +149,24 @@ Example:
 ---
 
 _Problem statement, data sources, and output contract live here; solvers, notebooks, and `validator.py` live in the repository implementation._
+
+## GA vs ILP scalability benchmark (reproducible)
+
+To test and report scalability without changing solver internals, run:
+
+`python common/benchmark_scalability.py --tiers small,medium,large --day-type weekday --ilp-time-limits-seconds 60,180,600 --ga-seeds 11,22,33,44,55`
+
+What it does:
+
+- Runs ILP (`exact_method/exact_scheduler.py`) for each tier and each ILP time limit.
+- Runs GA (`common/ga_solve.py`) for each tier and each GA seed.
+- Validates every generated schedule using `validator.py`.
+- Writes per-run JSONs under `benchmark_outputs/<tier>/`.
+- Writes one analysis-ready table: `benchmark_outputs/benchmark_summary.csv`.
+
+Suggested assignment evidence from `benchmark_summary.csv`:
+
+- Runtime growth vs dataset tier (`execution_time_seconds`).
+- ILP status degradation (`solver_status`) as size grows.
+- Feasibility/validity stability (`valid_schedule`, `constraints_violated`).
+- Revenue competitiveness under fixed time budgets (`total_revenue`).
