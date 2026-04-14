@@ -1,7 +1,7 @@
 {
   "metadata": {
     "algorithm": "Genetic Algorithm (PyGAD)",
-    "execution_time_seconds": 18.640992417000234,
+    "execution_time_seconds": 21.92635641701054,
     "total_revenue": 36346.325699951696,
     "fitness_score": 36346.325699951696,
     "constraints_violated": 0,
